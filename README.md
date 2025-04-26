@@ -1,2 +1,2 @@
 Langchain4j个人学习demo
-使用方法：先打包安装common模块即可 然后去申请一个百炼API
+使用方法：去申请一个百炼APIKey，替换掉common模块配置类里的apikey，然后打包安装common模块即可 

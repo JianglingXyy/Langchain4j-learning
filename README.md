@@ -1,0 +1,2 @@
+Langchain4j个人学习demo
+使用方法：先打包安装common模块即可

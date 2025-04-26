@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SSE 流式聊天测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        input, button {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #cccccc;
+        }
+        #output {
+            border: 1px solid #ddd;
+            padding: 10px;
+            min-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .status {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        .error {
+            color: #ff4444;
+        }
+    </style>
+</head>
+<body>
+<h1>SSE 流式对话测试</h1>
+
+<div class="input-group">
+    <input type="text" id="idInput" placeholder="输入会话ID" value="test123">
+    <input type="text" id="messageInput" placeholder="输入消息" value="你好，介绍一下上海">
+</div>
+
+<div class="input-group">
+    <button onclick="connect()" id="connectBtn">开始连接</button>
+    <button onclick="closeConnection()" id="closeBtn" disabled>关闭连接</button>
+</div>
+
+<div id="output"></div>
+<div id="status" class="status">状态: 未连接</div>
+
+<script>
+    let eventSource = null;
+
+    // 连接 SSE
+    function connect() {
+        const id = encodeURIComponent(document.getElementById('idInput').value);
+        const message = encodeURIComponent(document.getElementById('messageInput').value);
+        const url = `http://localhost:8083/low/chat?id=${id}&message=${message}`;
+
+        // 清除旧连接
+        if (eventSource) {
+            eventSource.close();
+        }
+
+        // 创建新连接
+        eventSource = new EventSource(url);
+        updateStatus('状态: 连接中...', '#666');
+
+        // 消息接收
+        eventSource.onmessage = (e) => {
+            appendOutput(`[数据接收] ${e.data}`);
+        };
+
+        // 错误处理
+        eventSource.onerror = (e) => {
+            if (e.eventPhase === EventSource.CLOSED) {
+                updateStatus('状态: 连接已关闭', '#666');
+            } else {
+                updateStatus(`状态: 连接错误 - ${e.message}`, 'red');
+            }
+            toggleButtons(false);
+        };
+
+        toggleButtons(true);
+    }
+
+    // 关闭连接
+    function closeConnection() {
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+            updateStatus('状态: 手动关闭', '#666');
+            toggleButtons(false);
+        }
+    }
+
+    // 显示数据
+    function appendOutput(text) {
+        const output = document.getElementById('output');
+        output.innerHTML += text + '\n';
+        output.scrollTop = output.scrollHeight; // 自动滚动到底部
+    }
+
+    // 更新状态
+    function updateStatus(text, color) {
+        const status = document.getElementById('status');
+        status.innerHTML = `状态: ${text}`;
+        status.style.color = color || '#666';
+    }
+
+    // 切换按钮状态
+    function toggleButtons(isConnected) {
+        document.getElementById('connectBtn').disabled = isConnected;
+        document.getElementById('closeBtn').disabled = !isConnected;
+    }
+</script>
+</body>
+</html>
